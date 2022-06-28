@@ -1,0 +1,27 @@
+version: "3"
+services:
+  tidb-write:
+    image: pingcap/tidb:v6.1.0
+    ports:
+      - 4000:4000
+    command: /tidb-server -config /tidb-config.toml -store unistore -path "" -lease 0s > tidb.log 2>&1 &
+  tidb-read:
+    image: pingcap/tidb:v6.1.0
+    ports:
+      - 4001:4000
+    command: /tidb-server -config /tidb-config.toml -store unistore -path "" -lease 0s > tidb.log 2>&1 &
+  proxysql:
+    image: proxysql/proxysql:2.0.6
+    volumes:
+    - "./proxysql.cnf:/etc/proxysql.cnf"
+    - "./proxysql:/var/lib/proxysql"
+    depends_on:
+      - tidb-write
+      - tidb-read
+    links:
+      - tidb-write
+      - tidb-read
+    ports:
+    - "6033:6033"
+    - "6032:6032"
+    - "6080:6080"
